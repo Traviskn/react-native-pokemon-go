@@ -1,8 +1,10 @@
 import React from 'react';
 import {
+  Animated,
   StatusBar,
   StyleSheet,
   TouchableOpacity,
+  PanResponder,
   View,
   Text,
   Image,
@@ -10,12 +12,39 @@ import {
 } from 'react-native';
 import Camera from 'react-native-camera';
 
+const { height, width } = Dimensions.get('window')
+
 export default class Example extends React.Component {
   constructor(props) {
     super(props);
 
+    // set up a camera ref
     this.camera = null;
 
+    // Set up animations
+    this.animatedValue = new Animated.ValueXY()
+
+    this.panResponder = PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => true,
+
+      onPanResponderMove: Animated.event([null,
+        { dx: this.animatedValue.x, dy: this.animatedValue.y }
+      ]),
+
+      onPanResponderRelease: () => {
+        Animated.spring(
+          this.animatedValue,
+          { toValue: { x: 0, y: 0 } }
+        ).start()
+      }
+    })
+
+    this.interpolatedRotateAnimation = this.animatedValue.x.interpolate({
+      inputRange: [0, width/2, width],
+      outputRange: ['-360deg', '0deg', '360deg']
+    })
+
+    // Initial state
     this.state = {
       camera: {
         aspect: Camera.constants.Aspect.fill,
@@ -24,6 +53,7 @@ export default class Example extends React.Component {
       }
     };
 
+    // Bind component methods
     this.goBack = this.goBack.bind(this)
   }
 
@@ -33,7 +63,6 @@ export default class Example extends React.Component {
   }
 
   render() {
-    const { height, width } = Dimensions.get('window')
 
     return (
       <View style={styles.container}>
@@ -72,9 +101,17 @@ export default class Example extends React.Component {
         </View>
 
         <View style={[styles.overlay, styles.bottomOverlay]}>
-          <TouchableOpacity onPress={this.goBack}>
-            <Image source={require('../img/pokeball.png')}/>
-          </TouchableOpacity>
+          <Animated.Image
+            source={require('../img/pokeball.png')}
+            style={{
+              transform: [
+                { translateX: this.animatedValue.x },
+                { translateY: this.animatedValue.y },
+                { rotate: this.interpolatedRotateAnimation }
+              ]
+            }}
+            { ...this.panResponder.panHandlers }
+          />
         </View>
       </View>
     );
