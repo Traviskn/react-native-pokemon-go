@@ -12,7 +12,8 @@
     "react": "15.4.1",
     "react-native": "0.39.2",
     "react-native-camera": "git+https://github.com/lwansbrough/react-native-camera.git",
-    "react-native-maps": "^0.12.2"
+    "react-native-maps": "^0.12.2",
+    "react-native-motion-manager": "0.0.6"
   },
   "devDependencies": {
     "babel-jest": "18.0.0",

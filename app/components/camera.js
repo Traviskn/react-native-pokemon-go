@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   Animated,
   StatusBar,
@@ -8,11 +8,15 @@ import {
   View,
   Text,
   Image,
-  Dimensions
-} from 'react-native';
-import Camera from 'react-native-camera';
+  Dimensions,
+  DeviceEventEmitter
+} from 'react-native'
+import { Gyroscope } from 'NativeModules'
+import Camera from 'react-native-camera'
 
 const { height, width } = Dimensions.get('window')
+
+Gyroscope.setGyroUpdateInterval(0.1)
 
 export default class Example extends React.Component {
   constructor(props) {
@@ -21,7 +25,12 @@ export default class Example extends React.Component {
     // set up a camera ref
     this.camera = null;
 
+    this.gyroTracker = null
+
     // Set up animations
+    this.animatedPokemonPosition = new Animated.ValueXY()
+    this.pokemonPosition = { x: 0, y: 0 }
+
     this.animatedValue = new Animated.ValueXY()
 
     this.panResponder = PanResponder.create({
@@ -55,6 +64,33 @@ export default class Example extends React.Component {
 
     // Bind component methods
     this.goBack = this.goBack.bind(this)
+    this.trackGyrometer = this.trackGyrometer.bind(this)
+  }
+
+  componentDidMount() {
+    Gyroscope.startGyroUpdates()
+
+    this.gyroTracker = DeviceEventEmitter.addListener('GyroData',
+      this.trackGyrometer(
+        Animated.event([
+          { x: this.animatedPokemonPosition.x, y: this.animatedPokemonPosition.y }
+        ])
+      )
+    )
+  }
+
+  componentWillUnmount() {
+    Gyroscope.stopGyroUpdates()
+    this.gyroTracker.remove()
+  }
+
+  trackGyrometer(eventHandler) {
+    return (data) => {
+      this.pokemonPosition.x += ((data.rotationRate.y - 0.03) * 50)
+      this.pokemonPosition.y += ((data.rotationRate.x + 0.053) * 50)
+
+      eventHandler(this.pokemonPosition)
+    }
   }
 
   goBack() {
@@ -80,15 +116,23 @@ export default class Example extends React.Component {
           mirrorImage={false}
         />
 
-        <Image
+        <Animated.Image
           source={this.props.route.params.pokemon.image}
-          style={{
-            position: 'absolute',
-            top: height/3,
-            bottom: height/3,
-            right: width/3,
-            left: width/3
-          }}
+          style={[
+            {
+              position: 'absolute',
+              top: height/3,
+              bottom: height/3,
+              right: width/3,
+              left: width/3
+            },
+            {
+              transform: [
+                { translateX: this.animatedPokemonPosition.x },
+                { translateY: this.animatedPokemonPosition.y }
+              ]
+            }
+          ]}
         />
 
         <View style={[styles.overlay, styles.topOverlay]}>
@@ -114,7 +158,7 @@ export default class Example extends React.Component {
           />
         </View>
       </View>
-    );
+    )
   }
 }
 
@@ -160,4 +204,4 @@ const styles = StyleSheet.create({
   pokemon: {
     position: 'absolute',
   }
-});
+})
