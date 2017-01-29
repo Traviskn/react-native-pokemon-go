@@ -20,47 +20,37 @@ Gyroscope.setGyroUpdateInterval(0.1)
 
 export default class Example extends React.Component {
   constructor(props) {
-    super(props);
+    super(props)
 
-    // set up a camera ref
-    this.camera = null;
-
+    // set up refs
     this.gyroTracker = null
 
     // Set up animations
     this.animatedPokemonPosition = new Animated.ValueXY()
     this.pokemonPosition = { x: 0, y: 0 }
 
-    this.animatedValue = new Animated.ValueXY()
+    this.animatedPokeball = new Animated.ValueXY()
 
-    this.panResponder = PanResponder.create({
-      onStartShouldSetPanResponderCapture: () => true,
-
-      onPanResponderMove: Animated.event([null,
-        { dx: this.animatedValue.x, dy: this.animatedValue.y }
-      ]),
-
-      onPanResponderRelease: () => {
-        Animated.spring(
-          this.animatedValue,
-          { toValue: { x: 0, y: 0 } }
-        ).start()
-      }
-    })
-
-    this.interpolatedRotateAnimation = this.animatedValue.x.interpolate({
+    this.interpolatedRotateAnimation = this.animatedPokeball.x.interpolate({
       inputRange: [0, width/2, width],
       outputRange: ['-360deg', '0deg', '360deg']
     })
 
-    // Initial state
-    this.state = {
-      camera: {
-        aspect: Camera.constants.Aspect.fill,
-        type: Camera.constants.Type.back,
-        orientation: Camera.constants.Orientation.auto,
+    // Set up touch handlers
+    this.panResponder = PanResponder.create({
+      onStartShouldSetPanResponderCapture: () => true,
+
+      onPanResponderMove: Animated.event([null,
+        { dx: this.animatedPokeball.x, dy: this.animatedPokeball.y }
+      ]),
+
+      onPanResponderRelease: () => {
+        Animated.spring(
+          this.animatedPokeball,
+          { toValue: { x: 0, y: 0 } }
+        ).start()
       }
-    };
+    })
 
     // Bind component methods
     this.goBack = this.goBack.bind(this)
@@ -99,21 +89,15 @@ export default class Example extends React.Component {
   }
 
   render() {
-
     return (
       <View style={styles.container}>
         <StatusBar animated hidden />
 
         <Camera
-          ref={(cam) => {
-            this.camera = cam;
-          }}
-          style={styles.preview}
-          aspect={this.state.camera.aspect}
-          type={this.state.camera.type}
-          flashMode={this.state.camera.flashMode}
-          defaultTouchToFocus
-          mirrorImage={false}
+          style={styles.camera}
+          aspect={Camera.constants.Aspect.fill}
+          type={Camera.constants.Type.back}
+          flashMode={Camera.constants.FlashMode.off}
         />
 
         <Animated.Image
@@ -149,8 +133,8 @@ export default class Example extends React.Component {
             source={require('../img/pokeball.png')}
             style={{
               transform: [
-                { translateX: this.animatedValue.x },
-                { translateY: this.animatedValue.y },
+                { translateX: this.animatedPokeball.x },
+                { translateY: this.animatedPokeball.y },
                 { rotate: this.interpolatedRotateAnimation }
               ]
             }}
@@ -166,7 +150,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  preview: {
+  camera: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',

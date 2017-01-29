@@ -13,25 +13,26 @@ import generateRandomPokemon from '../utils/randomPokemon'
 const COUNT = 3
 const THROTTLE = 3000
 
-const CustomMap = React.createClass({
-  componentWillMount() {
-    this.spawnWildPokemon = throttle(this.spawnWildPokemon, THROTTLE)
-  },
+export default class CustomMap extends React.Component {
+  constructor(props) {
+    super(props)
 
-  getInitialState() {
-    return {
+    this.state = {
       trainer: {
         latitude: 0,
         longitude: 0
       },
       pokemon: []
     }
-  },
+
+    this.spawnWildPokemon = throttle(this.spawnWildPokemon.bind(this), THROTTLE)
+    this.onTrainerMoved = this.onTrainerMoved.bind(this)
+  }
 
   onTrainerMoved(trainer) {
     this.setState({ trainer })
     this.spawnWildPokemon()
-  },
+  }
 
   spawnWildPokemon() {
     const location = this.state.trainer
@@ -45,13 +46,12 @@ const CustomMap = React.createClass({
     this.setState({
       pokemon: newPokemon
     })
-  },
+  }
 
   render() {
     return (
       <View style={styles.container}>
         <MapView
-          ref="map"
           style={styles.map}
           onRegionChange={this.onTrainerMoved}
           showsUserLocation
@@ -90,8 +90,8 @@ const CustomMap = React.createClass({
         </View>
       </View>
     )
-  },
-})
+  }
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -118,4 +118,3 @@ const styles = StyleSheet.create({
   },
 })
 
-export default CustomMap;
