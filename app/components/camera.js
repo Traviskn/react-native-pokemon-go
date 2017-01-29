@@ -22,6 +22,10 @@ export default class Example extends React.Component {
   constructor(props) {
     super(props)
 
+    this.state = {
+      captured: false
+    }
+
     // set up refs
     this.gyroTracker = null
 
@@ -44,17 +48,25 @@ export default class Example extends React.Component {
         { dx: this.animatedPokeball.x, dy: this.animatedPokeball.y }
       ]),
 
-      onPanResponderRelease: () => {
-        Animated.spring(
-          this.animatedPokeball,
-          { toValue: { x: 0, y: 0 } }
-        ).start()
+      onPanResponderRelease: (event, gesture) => {
+        if (this.isCaptured(gesture)) {
+          this.setState({ captured: true }, () => {
+            setTimeout(this.goBack, 1500)
+          })
+        }
+        else {
+          Animated.spring(
+            this.animatedPokeball,
+            { toValue: { x: 0, y: 0 } }
+          ).start()
+        }
       }
     })
 
     // Bind component methods
     this.goBack = this.goBack.bind(this)
     this.trackGyrometer = this.trackGyrometer.bind(this)
+    this.isCaptured = this.isCaptured.bind(this)
   }
 
   componentDidMount() {
@@ -84,8 +96,17 @@ export default class Example extends React.Component {
   }
 
   goBack() {
-    console.log(this.props.routes[0])
     this.props.navigator.pop()
+  }
+
+  isCaptured(gesture) {
+    const pokeballX = gesture.moveX
+    const pokeballY = gesture.moveY
+
+    const pokemonX = (width/2) + this.pokemonPosition.x
+    const pokemonY = (height/3) + this.pokemonPosition.y
+
+   return ((Math.abs((pokeballX - pokemonX)) < 50) && (Math.abs((pokeballY - pokemonY)) < 50))
   }
 
   render() {
@@ -100,24 +121,23 @@ export default class Example extends React.Component {
           flashMode={Camera.constants.FlashMode.off}
         />
 
-        <Animated.Image
-          source={this.props.route.params.pokemon.image}
-          style={[
-            {
-              position: 'absolute',
-              top: height/3,
-              bottom: height/3,
-              right: width/3,
-              left: width/3
-            },
-            {
+        {this.state.captured ? (
+          <View style={[styles.overlay, styles.captureOverlay]}>
+            <Text style={styles.cancelText}>
+              Pokemon Captured!
+            </Text>
+          </View>
+        ) : (
+          <Animated.Image
+            source={this.props.route.params.pokemon.image}
+            style={[styles.pokemon, {
               transform: [
                 { translateX: this.animatedPokemonPosition.x },
                 { translateY: this.animatedPokemonPosition.y }
               ]
-            }
-          ]}
-        />
+            }]}
+          />
+        )}
 
         <View style={[styles.overlay, styles.topOverlay]}>
           <TouchableOpacity
@@ -164,7 +184,6 @@ const styles = StyleSheet.create({
   },
   topOverlay: {
     top: 0,
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
   },
@@ -172,20 +191,25 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  captureButton: {
-    padding: 15,
-    backgroundColor: 'white',
-    borderRadius: 40,
+  captureOverlay: {
+    top: width/4,
+    flexDirection: 'row',
+    justifyContent: 'center',
   },
   cancelButton: {
     padding: 15,
   },
   cancelText: {
-    color: 'white'
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 28
   },
   pokemon: {
     position: 'absolute',
-  }
+    top: height/3,
+    bottom: height/3,
+    right: width/3,
+    left: width/3
+  },
 })
