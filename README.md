@@ -1,5 +1,5 @@
 A simple Pokemon GO clone.
 
-Demonstrates react native maps, camera, touch and gesture handling, sensors, and animations.
+Utilizes react native maps, camera, touch and gesture handling, sensors, and animations to achieve a very basic demo of augmented reality.
 
-Shows a very basic implementation of Augmented Reality.
+Currently only iOS is supported
